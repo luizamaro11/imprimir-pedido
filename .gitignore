@@ -1,0 +1,5 @@
+vendor/
+pedidos/
+credentials.json
+composer.lock
+token.json

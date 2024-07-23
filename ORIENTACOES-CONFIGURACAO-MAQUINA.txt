@@ -1,0 +1,27 @@
+ORIENTAÇÕES REPLICAR EM OUTRA MÁQUINA
+
+Baixar o xampp
+fazer a instalação do composer
+baixar os arquivos do projeto de impressão e colocar na pasta htdocs
+executar o comando "composer update"
+
+CONFIGURAR A IMPRESSORA
+	- Configurações > Dispositivos > Impressora e Scanners
+	- Selecione a impressora e clique em 'gerenciar'
+	- Clique em 'Propriedades da impressora' > 'Compartilhamento'
+	- Marque Compartilhar esta impressora e dê um nome de compartilhamento.
+
+Executar a seguinte linha de comando no cmd
+"php C:\xampp\htdocs\projeto-fernando\script.php"
+
+CRIAR UMA TAREFA AGENDADA
+Abra o Agendador de Tarefas.
+Clique em Criar Tarefa.
+Dê um nome à tarefa, como "Automatização de Impressão".
+Vá para a aba Disparadores e clique em Novo.
+Configure para executar a tarefa a cada 5 minutos (ou conforme necessário).
+Vá para a aba Ações e clique em Novo.
+Ação: Iniciar um programa
+Programa/script: php
+Adicione argumentos: C:\xampp\htdocs\projeto-fernando\script.php
+Clique em OK para salvar a tarefa.

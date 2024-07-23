@@ -1,0 +1,20 @@
+{
+    "name": "casa/projeto-fernando",
+    "description": "Impressão de Pedidos",
+    "autoload": {
+        "psr-4": {
+            "Casa\\ProjetoFernando\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "luizamaro11",
+            "email": "luiz.amaro@gmail.com"
+        }
+    ],
+    "require": {
+        "google/apiclient": "^2.15.0",
+        "symfony/filesystem": "^7.1",
+        "symfony/finder": "^7.1"
+    }
+}
