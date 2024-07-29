@@ -77,58 +77,35 @@ try {
         'q' => "'$folderId' in parents and mimeType='application/pdf'",
         'spaces' => 'drive',
         'fields' => 'files(id, name, createdTime)',
-        // 'orderBy' => 'createdTime desc',
+        'orderBy' => 'createdTime asc',
         // 'pageSize' => 1
     ));
 
+    $arquivosDrive = [];
+    $arquivosPastaPedidos = [];
+
     foreach ($results->files as $file) {
         $filePath = $localPath . '\\' . $file->name;
-
-        $path = "pedidos/";
-        $diretorio = dir($path);
-        while ($arquivo = $diretorio->read()) {
-            if (!in_array($arquivo, array('.', '..'))) {
-                if ($arquivo != $file->name) {
-                    $filePath = $localPath . '\\' . $file->name;
-                    downloadFile($service, $file->id, $filePath);
-                    printFile($filePath);
-                }
-            }
-        }
-        $diretorio->close();
-        
-        downloadFile($service, $file->id, $filePath);
-        printFile($filePath);
-        // unlink($filePath); // Remove o arquivo local após a impressão
+        $arquivosDrive[] = $file->name;
     }
 
-    // if (count($results->files) > 0) {
-    //     $file = $results->files[0];
+    $path = "pedidos/";
+    $diretorio = dir($path);
+    while ($arquivo = $diretorio->read()) {
+        if (!in_array($arquivo, array('.', '..'))) {
+            $arquivosPastaPedidos[] = $arquivo;
+        }
+    }
+    $diretorio->close();
 
-    //     // $path = "pedidos/";
-    //     // $diretorio = dir($path);
-    //     // echo "Lista de Arquivos do diretório '<strong>" . $path . "</strong>':<br />";
-    //     // while ($arquivo = $diretorio->read()) {
-    //     //     if (!in_array($arquivo, array('.', '..'))) {
+    $novosPedidos = array_diff($arquivosDrive, $arquivosPastaPedidos);
 
-    //     //         if ($arquivo != $file->name) {
-    //     //             $filePath = $localPath . '\\' . $file->name;
-    //     //             downloadFile($service, $file->id, $filePath);
-    //     //             printFile($filePath);
-    //     //         }
+    foreach ($novosPedidos as $pedido) {
+        $filePath = $localPath . '\\' . $pedido;
 
-    //     //         echo "<a href='" . $path.$arquivo . "'>" . $arquivo . "</a><br />";
-    //     //     }
-    //     // }
-    //     // $diretorio->close();
-
-    //     $filePath = $localPath . '\\' . $file->name;
-    //     downloadFile($service, $file->id, $filePath);
-    //     printFile($filePath);
-    //     // $filesystem->remove($filePath); // Remove o arquivo local após a impressão
-    // } else {
-    //     echo "Nenhum arquivo PDF encontrado na pasta especificada.";
-    // }
+        downloadFile($service, $file->id, $filePath);
+        printFile($filePath);
+    }
 } catch (Exception $e) {
     echo 'Error: ' . $e->getMessage();
 }
