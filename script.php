@@ -1,21 +1,20 @@
 <?php
 
 require 'vendor/autoload.php';
-
 use Google\Client;
 use Google\Service\Drive;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Finder;
 
 function initializeGoogleClient() {
     $client = new Client();
-    $client->setAuthConfig("credentials.json");
+    $client->setAuthConfig(__DIR__ . "/credentials.json");
     $client->addScope(Drive::DRIVE_READONLY);
     $client->setAccessType("offline");
+    // $client->setRedirectUri('http://' . $_SERVER['HTTP_HOST'] . '/impressaoPedido/script.php');
     // $client->setApprovalPrompt("force");
 
     // Verificar se há um token de acesso salvo
-    $tokenPath = 'token.json';
+    $tokenPath = __DIR__ . '/token.json';
+
     if (file_exists($tokenPath)) {
         $accessToken = json_decode(file_get_contents($tokenPath), true);
         $client->setAccessToken($accessToken);
@@ -31,10 +30,12 @@ function initializeGoogleClient() {
         } else {
             // Solicitar um novo token de autorização
             $authUrl = $client->createAuthUrl();
+            // header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL));
 
             printf("Abra o seguinte link no seu Navegador:\n%s\n", $authUrl);
             print 'Digite o código de verificação: ';
             $authCode = trim(fgets((fopen('php://stdin', 'r'))));
+            // $authCode = $_GET['code'];
 
             // Trocar o código de verificação por um token de acesso
             $accessToken = $client->fetchAccessTokenWithAuthCode($authCode);
@@ -59,53 +60,58 @@ function downloadFile($service, $fileId, $filePath) {
 
 function printFile($filePath) {
     $printerName = "PDF24"; // Substitua pelo nome da sua impressora compartilhada
-    $command = "print /D:\\\\localhost\\" . $printerName . " " . escapeshellarg($filePath);
+    $command = "print /D:\\\\localhost\\" . escapeshellarg($printerName) . " " . escapeshellarg($filePath);
     exec($command);
 }
 
-$client = initializeGoogleClient();
-$service = new Drive($client);
-$folderId = '1TY9qXrodIoVBgHFXdN1puUCLjby2B1bK'; // ID da pasta do Google Drive
-$localPath = 'C:\\xampp\\htdocs\\impressaoPedido\\pedidos'; // Caminho para a pasta local
+// $count = 0;
 
-$filesystem = new Filesystem();
-$finder = new Finder();
-
-try {
-
-    $results = $service->files->listFiles(array(
-        'q' => "'$folderId' in parents and mimeType='application/pdf'",
-        'spaces' => 'drive',
-        'fields' => 'files(id, name, createdTime)',
-        'orderBy' => 'createdTime asc',
-        // 'pageSize' => 1
-    ));
-
-    $arquivosDrive = [];
-    $arquivosPastaPedidos = [];
-
-    foreach ($results->files as $file) {
-        $filePath = $localPath . '\\' . $file->name;
-        $arquivosDrive[] = $file->name;
-    }
-
-    $path = "pedidos/";
-    $diretorio = dir($path);
-    while ($arquivo = $diretorio->read()) {
-        if (!in_array($arquivo, array('.', '..'))) {
-            $arquivosPastaPedidos[] = $arquivo;
+// while (true) {
+    
+    $client = initializeGoogleClient();
+    $service = new Drive($client);
+    $folderId = '1TY9qXrodIoVBgHFXdN1puUCLjby2B1bK'; // ID da pasta do Google Drive
+    $localPath = 'C:\\xampp\\htdocs\\impressaoPedido\\pedidos'; // Caminho para a pasta local
+    
+    try {
+    
+        $results = $service->files->listFiles(array(
+            'q' => "'$folderId' in parents and mimeType='application/pdf'",
+            'spaces' => 'drive',
+            'fields' => 'files(id, name, createdTime)',
+            'orderBy' => 'createdTime asc',
+            // 'pageSize' => 1
+        ));
+    
+        $arquivosDrive = [];
+        $arquivosPastaPedidos = [];
+    
+        foreach ($results->files as $file) {
+            $filePath = $localPath . '\\' . $file->name;
+            $arquivosDrive[] = $file->name;
         }
+    
+        $path = __DIR__ . "/pedidos/";
+        $diretorio = dir($path);
+        while ($arquivo = $diretorio->read()) {
+            if (!in_array($arquivo, array('.', '..'))) {
+                $arquivosPastaPedidos[] = $arquivo;
+            }
+        }
+        $diretorio->close();
+    
+        $novosPedidos = array_diff($arquivosDrive, $arquivosPastaPedidos);
+    
+        foreach ($novosPedidos as $pedido) {
+            $filePath = $localPath . '\\' . $pedido;
+    
+            downloadFile($service, $file->id, $filePath);
+            printFile($filePath);
+        }
+    } catch (Exception $e) {
+        echo 'Error: ' . $e->getMessage();
     }
-    $diretorio->close();
 
-    $novosPedidos = array_diff($arquivosDrive, $arquivosPastaPedidos);
-
-    foreach ($novosPedidos as $pedido) {
-        $filePath = $localPath . '\\' . $pedido;
-
-        downloadFile($service, $file->id, $filePath);
-        printFile($filePath);
-    }
-} catch (Exception $e) {
-    echo 'Error: ' . $e->getMessage();
-}
+    // echo "script executado" . $count++;
+    // sleep(30);
+// }
